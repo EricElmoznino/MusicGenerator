@@ -1,7 +1,9 @@
 import tensorflow as tf
 from tensorflow.python.ops import control_flow_ops as cf
 
-class rbm:
+
+class RBM:
+
     def __init__(self, weights, bias_visible, bias_hidden):
         self.w = weights
         self.bv = bias_visible
