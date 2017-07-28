@@ -1,14 +1,16 @@
 import midi
 import numpy as np
-import glob  
-from tqdm import tqdm
 
 class MidiManipulator:
-    def __init__(self, lower_bound=24, upper_bound=102, num_timesteps=1):
+    def __init__(self, num_timesteps, lower_bound=24, upper_bound=102):
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
         self.span = upper_bound - lower_bound
         self.num_timesteps = num_timesteps
+
+
+    def input_length(self):
+        return 2 * self.span * self.num_timesteps
 
 
     def write_song(self, path, song):
@@ -18,17 +20,18 @@ class MidiManipulator:
 
     def get_song(self, path):
         #Load the song and reshape it to place multiple timesteps next to each other
-        song = np.array(self.midiToNoteStateMatrix(path))
-        song = song[:np.floor(song.shape[0]/self.num_timesteps)*self.num_timesteps]
-        song = np.reshape(song, [song.shape[0]/self.num_timesteps, song.shape[1]*self.num_timesteps])
+        song = np.array(self.midi_to_note_state_matrix(path))
+        song = song[:int(song.shape[0]/self.num_timesteps)*self.num_timesteps]
+        song = np.reshape(song, [int(song.shape[0]/self.num_timesteps), 2*self.span*self.num_timesteps])
         return song
 
-    def get_songs(self, path):
-        files = glob.glob('{}/*.mid*'.format(path))
+    def get_songs(self, files, max_size):
         songs = []
-        for f in tqdm(files):
+        for f in files:
             try:
-                songs.append(self.get_song(f))
+                song = self.get_song(f)
+                for i in range(0, song.shape[0], max_size):
+                    songs.append(song[i:i+max_size, :])
             except Exception as e:
                 print (f, e)
         return songs
