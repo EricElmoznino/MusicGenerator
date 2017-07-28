@@ -19,13 +19,17 @@ class MusicGenerator:
         rnn_state_size = 100
 
         with tf.variable_scope('rbm'):
-            self.w_rbm = hp.weight_variables([rbm_visible_size, rbm_hidden_size])
+            self.w_rbm = hp.weight_variables([rbm_visible_size, rbm_hidden_size], stddev=0.01)
 
         with tf.variable_scope('rnn_to_rbm'):
-            self.w_rnn_to_rbm_h = hp.weight_variables([rnn_state_size, rbm_hidden_size], name='weights_hidden')
-            self.w_rnn_to_rbm_v = hp.weight_variables([rnn_state_size, rbm_visible_size], name='weights_visible')
-            self.b_rnn_to_rbm_h = hp.bias_variables([rbm_hidden_size], name='biases_hidden')
-            self.b_rnn_to_rbm_v = hp.bias_variables([rbm_visible_size], name='biases_visible')
+            self.w_rnn_to_rbm_h = hp.weight_variables([rnn_state_size, rbm_hidden_size],
+                                                      stddev=0.01, name='weights_hidden')
+            self.w_rnn_to_rbm_v = hp.weight_variables([rnn_state_size, rbm_visible_size],
+                                                      stddev=0.01, name='weights_visible')
+            self.b_rnn_to_rbm_h = hp.bias_variables([rbm_hidden_size],
+                                                    value=0.0, name='biases_hidden')
+            self.b_rnn_to_rbm_v = hp.bias_variables([rbm_visible_size],
+                                                    value=0.0, name='biases_visible')
 
         with tf.variable_scope('rnn'):
             self.cell = tf.contrib.rnn.BasicLSTMCell(rnn_state_size)
@@ -79,8 +83,19 @@ class MusicGenerator:
 
                 hp.log_epoch(epoch, self.conf.epochs, epoch_cost / n_batches)
 
-                self.saver.save(sess, os.path.join(self.conf.train_log_path, 'pre_train.ckpt'))
+            self.saver.save(sess, os.path.join(self.conf.train_log_path, 'pre_train.ckpt'))
 
+            # test generation
+            sample = rbm.gibbs_sample(x, 1, trainable=False).eval(
+                session=sess,
+                feed_dict={x: np.zeros((10, self.manipulator.input_length()))}
+            )
+            for i in range(sample.shape[0]):
+                if not any(sample[i,:]):
+                    continue
+                s = np.reshape(sample[i,:], (self.manipulator.num_timesteps,
+                                             2*self.manipulator.span))
+                self.manipulator.note_state_matrix_to_midi(s, "generated_chord_{}".format(i))
 
 
 

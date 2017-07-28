@@ -41,14 +41,14 @@ def log_epoch(epoch, total_epochs, error):
           ':\tError:', error, '\n')
 
 
-def weight_variables(shape, name='weights'):
-    initial = tf.truncated_normal_initializer(stddev=0.1)
+def weight_variables(shape, stddev=0.1, name='weights'):
+    initial = tf.truncated_normal_initializer(stddev=stddev)
     return tf.get_variable(name, shape=shape,
                            initializer=initial)
 
 
-def bias_variables(shape, name='biases'):
-    initial = tf.constant_initializer(0.1)
+def bias_variables(shape, value=0.1, name='biases'):
+    initial = tf.constant_initializer(value)
     return tf.get_variable(name, shape=shape,
                            initializer=initial)
 
