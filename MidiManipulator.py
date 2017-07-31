@@ -1,5 +1,6 @@
 import midi
 import numpy as np
+import os
 
 class MidiManipulator:
     def __init__(self, num_timesteps, lower_bound=24, upper_bound=102):
@@ -9,6 +10,7 @@ class MidiManipulator:
         self.num_timesteps = num_timesteps
 
 
+    @property
     def input_length(self):
         return 2 * self.span * self.num_timesteps
 
@@ -98,7 +100,7 @@ class MidiManipulator:
         state_matrix = np.asarray(state_matrix).tolist()
         return state_matrix
 
-    def note_state_matrix_to_midi(self, state_matrix, name="song"):
+    def note_state_matrix_to_midi(self, state_matrix, path, name="song"):
         state_matrix = np.array(state_matrix)
         if not len(state_matrix.shape) == 3:
             state_matrix = np.dstack((state_matrix[:, :self.span], state_matrix[:, self.span:]))
@@ -140,4 +142,4 @@ class MidiManipulator:
         eot = midi.EndOfTrackEvent(tick=1)
         track.append(eot)
 
-        midi.write_midifile("{}.mid".format(name), pattern)
+        midi.write_midifile(os.path.join(path, '{}.mid'.format(name)), pattern)
