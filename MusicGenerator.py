@@ -123,7 +123,7 @@ class MusicGenerator:
                                                     primer_state)
 
             def music_timestep(t, k, x_t, state_tm1, music):
-                rnn_state = tf.reshape(state_tm1.h, [1, self.rnn_state_size])
+                rnn_state = tf.reshape(state_tm1.c, [1, self.rnn_state_size])
                 bh = tf.matmul(rnn_state, self.w_rnn_to_rbm_h) + self.b_rnn_to_rbm_h
                 bv = tf.matmul(rnn_state, self.w_rnn_to_rbm_v) + self.b_rnn_to_rbm_v
                 rbm = RBM(self.w_rbm, bv, bh)
@@ -151,7 +151,7 @@ class MusicGenerator:
 
             states = tf.scan(unroll_rnn, self.x,
                              initializer=self.rnn_cell.zero_state(1, tf.float32))
-            states = tf.reshape(states.h, [-1, self.rnn_state_size])
+            states = tf.reshape(states.c, [-1, self.rnn_state_size])
 
             bh = tf.matmul(states, self.w_rnn_to_rbm_h) + self.b_rnn_to_rbm_h
             bv = tf.matmul(states, self.w_rnn_to_rbm_v) + self.b_rnn_to_rbm_v
