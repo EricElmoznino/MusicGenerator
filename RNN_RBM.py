@@ -64,7 +64,7 @@ class RNN_RBM:
             rbm = RBM(self.W, self.Buv, self.Buh)
 
         with tf.variable_scope('pre-train_ops'):
-            cost = rbm.free_energy_cost_pre(x, 1)
+            cost = rbm.free_energy_cost(x, 1)
             cost_summary = tf.summary.scalar('pre-train_cost', cost)
             optimizer = tf.train.AdamOptimizer().minimize(cost)
 

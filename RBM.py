@@ -30,16 +30,6 @@ class RBM:
         x_sample = self.gibbs_sample(x, num_iterations)
 
         def free_energy(_x):
-            # return -tf.reduce_sum(tf.log(1 + tf.exp(tf.matmul(_x, self.w) + self.bh)), 1) - \
-            #        tf.reduce_sum(tf.multiply(_x, self.bv), 1)
-            return -tf.reduce_sum(tf.log(1 + tf.exp(tf.matmul(_x, self.w) + self.bh)), 1) - tf.matmul(_x, tf.transpose(self.bv))
-
-        return tf.reduce_mean(free_energy(x) - free_energy(x_sample))
-
-    def free_energy_cost_pre(self, x, num_iterations):
-        x_sample = self.gibbs_sample(x, num_iterations)
-
-        def free_energy(_x):
             return -tf.reduce_sum(tf.log(1 + tf.exp(tf.matmul(_x, self.w) + self.bh)), 1) - \
                    tf.reduce_sum(tf.multiply(_x, self.bv), 1)
 
