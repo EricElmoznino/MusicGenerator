@@ -48,7 +48,7 @@ class MusicGenerator:
         print('Starting training\n')
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
-            self.saver.restore(sess, os.path.join(self.conf.train_log_path, 'pre_train.ckpt'))
+            self.saver.restore(sess, os.path.join(self.conf.train_log_path, 'pre-train.ckpt'))
 
             train_writer = tf.summary.FileWriter(self.conf.train_log_path, sess.graph)
 
