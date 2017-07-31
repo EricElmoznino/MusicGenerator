@@ -8,17 +8,13 @@ import os
 
 class Configuration:
     def __init__(self, train_log_path = './train', epochs=50, pretrain_epochs=50,
-                 batch_size=100, pretrain_batch_size=100, num_timesteps=5,
-                 train_sample_iters=15, pretrain_sample_iters=1, gen_sample_iters=25):
+                 batch_size=100, pretrain_batch_size=100, num_timesteps=5):
         self.train_log_path = train_log_path
         self.epochs = epochs
         self.pretrain_epochs = pretrain_epochs
         self.batch_size = batch_size
         self.pretrain_batch_size = pretrain_batch_size
         self.num_timesteps = num_timesteps
-        self.train_sample_iters = train_sample_iters
-        self.pretrain_sample_iters = pretrain_sample_iters
-        self.gen_sample_iters = gen_sample_iters
 
 
 def files_at_path(path):
