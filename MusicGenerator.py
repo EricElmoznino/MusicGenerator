@@ -128,7 +128,7 @@ class MusicGenerator:
                 bv = tf.matmul(rnn_state, self.w_rnn_to_rbm_v) + self.b_rnn_to_rbm_v
                 rbm = RBM(self.w_rbm, bv, bh)
                 note = rbm.gibbs_sample(x_t, self.conf.gen_sample_iters, trainable=False)
-                _, state_t = self.rnn_cell(x_t, state_tm1)
+                _, state_t = self.rnn_cell(note, state_tm1)
                 music = music + tf.concat([tf.zeros([t, self.manipulator.input_length]), note,
                                            tf.zeros([k-t-1, self.manipulator.input_length])], 0)
                 return t+1, k, note, state_t, music
