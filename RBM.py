@@ -18,7 +18,7 @@ class RBM:
             # Runs a single gibbs step. The visible values are initialized to xk
             hk = self.__sample(tf.sigmoid(tf.matmul(xk, self.w) + self.bh))
             xk = self.__sample(tf.sigmoid(tf.matmul(hk, tf.transpose(self.w)) + self.bv))
-            return i+1 + 1, k, xk
+            return i+1, k, xk
 
         count = tf.constant(0)
         _, _, x_sample = cf.while_loop(lambda i, n, *args: i < n,

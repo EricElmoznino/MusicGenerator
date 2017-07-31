@@ -40,6 +40,16 @@ class MusicGenerator:
 
         self.saver = tf.train.Saver()
 
+    def generate(self, length, primer_song, generation_path, name, primer_length=100):
+        primer_song = self.manipulator.get_song(primer_song)[0:primer_length, :]
+        primer_length = primer_song.shape[0]
+        model = self.__build_generation_model(length, primer_length)
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+            self.saver.restore(sess, os.path.join(self.conf.train_log_path, 'model.ckpt'))
+            music = sess.run(model, feed_dict={self.x: primer_song})
+        self.manipulator.write_song(os.path.join(generation_path, name+'.mid'), music)
+        return music
 
     def train(self, train_path):
         if os.path.exists(self.conf.train_log_path):
@@ -104,6 +114,34 @@ class MusicGenerator:
                 hp.log_epoch(epoch, self.conf.epochs, epoch_cost / n_batches)
 
             self.saver.save(sess, os.path.join(self.conf.train_log_path, model_name+'.ckpt'))
+
+    def __build_generation_model(self, length, primer_length):
+        with tf.variable_scope('generation'):
+            with tf.variable_scope('primer'):
+                primer_state = self.rnn_cell.zero_state(1, tf.float32)
+                for i in range(primer_length):
+                    _, primer_state = self.rnn_cell(tf.reshape(self.x[i, :], [1, -1]),
+                                                    primer_state)
+
+            def music_timestep(t, k, x_t, state_tm1, music):
+                rnn_state = tf.reshape(state_tm1.c, [1, self.rnn_state_size])
+                bh = tf.matmul(rnn_state, self.w_rnn_to_rbm_h) + self.b_rnn_to_rbm_h
+                bv = tf.matmul(rnn_state, self.w_rnn_to_rbm_v) + self.b_rnn_to_rbm_v
+                rbm = RBM(self.w_rbm, bv, bh)
+                note = rbm.gibbs_sample(x_t, self.conf.gen_sample_iters, trainable=False)
+                _, state_t = self.rnn_cell(x_t, state_tm1)
+                music = music + tf.concat([tf.zeros([t, self.manipulator.input_length]), note,
+                                           tf.zeros([k-t-1, self.manipulator.input_length])], 0)
+                return t+1, k, note, state_t, music
+
+            count = tf.constant(0)
+            music = tf.zeros([length, self.manipulator.input_length], tf.float32)
+            _, _, _, _, music = tf.while_loop(lambda t, k, *args: t < k, music_timestep,
+                                              [count, length,
+                                               tf.zeros([1, self.manipulator.input_length], tf.float32),
+                                               primer_state, music],
+                                              back_prop=False)
+        return music
 
     def __build_train_model(self):
         with tf.variable_scope('train_rnn_rbm'):

@@ -18,7 +18,7 @@ class MidiManipulator:
     def write_song(self, path, song):
         #Reshape the song into a format that midi_manipulation can understand, and then write the song to disk
         song = np.reshape(song, (song.shape[0]*self.num_timesteps, 2*self.span))
-        self.note_state_matrix_to_midi(song, name=path)
+        self.note_state_matrix_to_midi(song, path)
 
     def get_song(self, path):
         #Load the song and reshape it to place multiple timesteps next to each other
@@ -100,7 +100,7 @@ class MidiManipulator:
         state_matrix = np.asarray(state_matrix).tolist()
         return state_matrix
 
-    def note_state_matrix_to_midi(self, state_matrix, path, name="song"):
+    def note_state_matrix_to_midi(self, state_matrix, path):
         state_matrix = np.array(state_matrix)
         if not len(state_matrix.shape) == 3:
             state_matrix = np.dstack((state_matrix[:, :self.span], state_matrix[:, self.span:]))
@@ -142,4 +142,4 @@ class MidiManipulator:
         eot = midi.EndOfTrackEvent(tick=1)
         track.append(eot)
 
-        midi.write_midifile(os.path.join(path, '{}.mid'.format(name)), pattern)
+        midi.write_midifile(path, pattern)
