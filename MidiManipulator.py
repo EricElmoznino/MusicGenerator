@@ -1,6 +1,7 @@
+from __future__ import print_function
 import midi
 import numpy as np
-import os
+
 
 class MidiManipulator:
     def __init__(self, num_timesteps, lower_bound=24, upper_bound=102):
