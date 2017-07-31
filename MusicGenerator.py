@@ -37,41 +37,24 @@ class MusicGenerator:
 
         self.__pre_train(train_path)
 
-        print('Starting training\n')
         cost, optimizer, summary = self.rnn_rbm.train_model(self.x)
-        self.__run_updates(train_path, optimizer, cost, [summary], False)
 
-    def __pre_train(self, train_path):
-        print('Starting pre-training\n')
-        cost, optimizer, summary = self.rnn_rbm.pretrain_model(self.x)
-        self.__run_updates(train_path, optimizer, cost, [summary], True)
+        summaries = tf.summary.merge([summary])
 
-    def __run_updates(self, train_path, optimizer, cost, summaries, pre_training):
-        if pre_training:
-            epochs = self.conf.pretrain_epochs
-            batch_size = self.conf.pretrain_batch_size
-            model_name = 'pre_train'
-        else:
-            epochs = self.conf.epochs
-            batch_size = self.conf.batch_size
-            model_name = 'model'
-
-        summaries = tf.summary.merge(summaries)
-
-        songs = self.manipulator.get_songs(hp.files_at_path(train_path), batch_size)
+        songs = self.manipulator.get_songs(hp.files_at_path(train_path), self.conf.batch_size)
         n_batches = len(songs)
-        n_steps = n_batches * epochs
+        n_steps = n_batches * self.conf.epochs
 
+        print('Starting training\n')
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
-            if not pre_training:
-                self.saver.restore(sess, os.path.join(self.conf.train_log_path, 'pre_train.ckpt'))
+            self.saver.restore(sess, os.path.join(self.conf.train_log_path, 'pre_train.ckpt'))
 
             train_writer = tf.summary.FileWriter(self.conf.train_log_path, sess.graph)
 
             start_time = time.time()
             step = 0
-            for epoch in range(1, epochs + 1):
+            for epoch in range(1, self.conf.epochs + 1):
                 epoch_cost = 0
                 for batch in range(n_batches):
                     song_batch = songs[batch]
@@ -90,4 +73,36 @@ class MusicGenerator:
 
                 hp.log_epoch(epoch, self.conf.epochs, epoch_cost / n_batches)
 
-            self.saver.save(sess, os.path.join(self.conf.train_log_path, model_name+'.ckpt'))
+            self.saver.save(sess, os.path.join(self.conf.train_log_path, 'model.ckpt'))
+
+    def __pre_train(self, train_path):
+        optimizer = self.rnn_rbm.pretrain_model(self.x)
+
+        songs = self.manipulator.get_songs(hp.files_at_path(train_path), self.conf.pretrain_batch_size)
+        n_batches = len(songs)
+        n_steps = n_batches * self.conf.pretrain_epochs
+
+        print('Starting pre-training\n')
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+            step = 0
+            for epoch in range(self.conf.pretrain_epochs):
+                for batch in range(n_batches):
+                    song_batch = songs[batch]
+                    sess.run(optimizer, feed_dict={self.x: song_batch})
+
+            self.saver.save(sess, os.path.join(self.conf.train_log_path, 'pre-train.ckpt'))
+
+    def __run_updates(self, train_path, optimizer, cost, summaries, pre_training):
+        if pre_training:
+            epochs = self.conf.pretrain_epochs
+            batch_size = self.conf.pretrain_batch_size
+            model_name = 'pre_train'
+        else:
+            epochs = self.conf.epochs
+            batch_size = self.conf.batch_size
+            model_name = 'model'
+
+
+
+

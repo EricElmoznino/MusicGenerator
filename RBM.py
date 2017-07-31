@@ -34,3 +34,18 @@ class RBM:
                    tf.reduce_sum(tf.multiply(_x, self.bv), 1)
 
         return tf.reduce_mean(free_energy(x) - free_energy(x_sample))
+
+    def apply_cd(self, x, lr):
+        x_sample = self.gibbs_sample(x, 1)
+        h = self.__sample(tf.sigmoid(tf.matmul(x, self.w) + self.bh))
+        h_sample = self.__sample(tf.sigmoid(tf.matmul(x_sample, self.w) + self.bh))
+
+        lr = tf.constant(lr, dtype=tf.float32)
+        batch_size = tf.cast(tf.shape(x)[0], tf.float32)
+        w_delta = tf.multiply(lr/batch_size, tf.subtract(tf.matmul(tf.transpose(x), h), tf.matmul(tf.transpose(x_sample), h_sample)))
+        bv_delta = tf.multiply(lr/batch_size, tf.reduce_sum(tf.subtract(x, x_sample), 0, True))
+        bh_delta = tf.multiply(lr/batch_size, tf.reduce_sum(tf.subtract(h, h_sample), 0, True))
+
+        optimizer = [self.w.assign_add(w_delta), self.bv.assign_add(bv_delta), self.bh.assign_add(bh_delta)]
+        return optimizer
+

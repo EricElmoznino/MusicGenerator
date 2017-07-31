@@ -55,7 +55,10 @@ class RNN_RBM:
         with tf.variable_scope('train_ops'):
             cost = rbm.free_energy_cost(x, 15)
             cost_summary = tf.summary.scalar('train_cost', cost)
-            optimizer = tf.train.AdamOptimizer().minimize(cost)
+            optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
+            gradients = optimizer.compute_gradients(cost)
+            gradients = [(tf.clip_by_value(grad, -10.0, 10.0), var) for grad, var in gradients]
+            optimizer = optimizer.apply_gradients(gradients)
 
         return cost, optimizer, cost_summary
 
