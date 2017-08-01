@@ -13,12 +13,12 @@ class RNN_RBM:
             self.W = hp.weight_variables([self.v_size, self.h_size], stddev=0.01)
 
         with tf.variable_scope('rnn'):
-            # self.rnn = tf.contrib.rnn.BasicRNNCell(self.s_size)
-            # self.rnn_s0 = self.rnn.zero_state(1, tf.float32)
-            self.Wvu = hp.weight_variables([self.v_size, self.s_size], stddev=0.0001, name='weights_input')
-            self.Wuu = hp.weight_variables([self.s_size, self.s_size], stddev=0.0001, name='weights_hidden')
-            self.Bu = hp.bias_variables([self.s_size], value=0.0, name='biases_hidden')
-            self.rnn_s0 = tf.Variable(tf.zeros([1, self.s_size]), name='initial_state')
+            self.rnn = tf.contrib.rnn.BasicRNNCell(self.s_size)
+            self.rnn_s0 = self.rnn.zero_state(1, tf.float32)
+            # self.Wvu = hp.weight_variables([self.v_size, self.s_size], stddev=0.0001, name='weights_input')
+            # self.Wuu = hp.weight_variables([self.s_size, self.s_size], stddev=0.0001, name='weights_hidden')
+            # self.Bu = hp.bias_variables([self.s_size], value=0.0, name='biases_hidden')
+            # self.rnn_s0 = tf.Variable(tf.zeros([1, self.s_size]), name='initial_state')
 
         with tf.variable_scope('rnn_to_rbm'):
             self.Wuh = hp.weight_variables([self.s_size, self.h_size], stddev=0.0001, name='weights_h')
@@ -36,8 +36,8 @@ class RNN_RBM:
             bv = tf.matmul(s_tm1, self.Wuv) + self.Buv
             rbm = RBM(self.W, bv, bh)
             notes_t = rbm.gibbs_sample(x_t, 25)
-            s_t = tf.tanh(tf.matmul(notes_t, self.Wvu) + tf.matmul(s_tm1, self.Wuu) + self.Bu)
-            # s_t = self.rnn(notes_t, s_tm1)
+            # s_t = tf.tanh(tf.matmul(notes_t, self.Wvu) + tf.matmul(s_tm1, self.Wuu) + self.Bu)
+            s_t, _ = self.rnn(notes_t, s_tm1)
             music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
                                        tf.zeros([k-t-1, self.v_size])], 0)
             return t+1, k, notes_t, s_t, music
@@ -76,15 +76,15 @@ class RNN_RBM:
         return optimizer
 
     def __unroll_rnn(self, x):
-        def step(s_tm1, x_t):
-            x_t = tf.reshape(x_t, [1, -1])
-            state_t = tf.tanh(tf.matmul(x_t, self.Wvu) + tf.matmul(s_tm1, self.Wuu) + self.Bu)
-            return state_t
-        states = tf.scan(step, x, initializer=self.rnn_s0)
-        states = tf.reshape(states, [-1, self.s_size])
-        return states
-        # x = tf.reshape(x, [1, -1, self.v_size])
-        # states, _ = tf.nn.dynamic_rnn(self.rnn, x, initial_state=self.rnn_s0)
+        # def step(s_tm1, x_t):
+        #     x_t = tf.reshape(x_t, [1, -1])
+        #     state_t = tf.tanh(tf.matmul(x_t, self.Wvu) + tf.matmul(s_tm1, self.Wuu) + self.Bu)
+        #     return state_t
+        # states = tf.scan(step, x, initializer=self.rnn_s0)
         # states = tf.reshape(states, [-1, self.s_size])
         # return states
+        x = tf.reshape(x, [1, -1, self.v_size])
+        states, _ = tf.nn.dynamic_rnn(self.rnn, x, initial_state=self.rnn_s0)
+        states = tf.reshape(states, [-1, self.s_size])
+        return states
 
