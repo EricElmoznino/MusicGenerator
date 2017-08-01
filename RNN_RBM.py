@@ -68,7 +68,9 @@ class RNN_RBM:
         with tf.variable_scope('pre-train_rbm'):
             rbm = RBM(self.W, self.Buv, self.Buh)
         with tf.variable_scope('pre-train_ops'):
-            optimizer = rbm.apply_cd(x, 0.01)
+            # optimizer = rbm.apply_cd(x, 0.01)
+            cost = rbm.free_energy_cost(x, 1)
+            optimizer = tf.train.AdamOptimizer().minimize(cost)
         return optimizer
 
     def __unroll_rnn(self, x):
