@@ -13,7 +13,8 @@ class RNN_RBM:
             self.W = hp.weight_variables([self.v_size, self.h_size], stddev=0.01)
 
         with tf.variable_scope('rnn'):
-            self.rnn = tf.contrib.rnn.BasicRNNCell(self.s_size)
+            self.rnn = tf.contrib.rnn.BasicLSTMCell(self.s_size)
+            # self.rnn = tf.contrib.rnn.BasicRNNCell(self.s_size)
             self.rnn_s0 = self.rnn.zero_state(1, tf.float32)
             # self.Wvu = hp.weight_variables([self.v_size, self.s_size], stddev=0.0001, name='weights_input')
             # self.Wuu = hp.weight_variables([self.s_size, self.s_size], stddev=0.0001, name='weights_hidden')
