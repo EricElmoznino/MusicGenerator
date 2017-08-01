@@ -29,16 +29,17 @@ class RNN_RBM:
 
     def generation_model(self, x, length):
         with tf.variable_scope('generation'):
-            primer_state = self.__unroll_rnn(x)[-1]
-            primer_state = tf.reshape(primer_state, [1, -1])
+            # primer_state = self.__unroll_rnn(x)[-1]
+            _, primer_state = self.__unroll_rnn(x)
+            # primer_state = tf.reshape(primer_state, [1, -1])
 
         def music_timestep(t, k, x_t, s_tm1, music):
-            bh = tf.matmul(s_tm1, self.Wuh) + self.Buh
-            bv = tf.matmul(s_tm1, self.Wuv) + self.Buv
+            bh = tf.matmul(s_tm1.h, self.Wuh) + self.Buh
+            bv = tf.matmul(s_tm1.h, self.Wuv) + self.Buv
             rbm = RBM(self.W, bv, bh)
             notes_t = rbm.gibbs_sample(x_t, 25)
             # s_t = tf.tanh(tf.matmul(notes_t, self.Wvu) + tf.matmul(s_tm1, self.Wuu) + self.Bu)
-            s_t, _ = self.rnn(notes_t, s_tm1)
+            _, s_t = self.rnn(notes_t, s_tm1)
             music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
                                        tf.zeros([k-t-1, self.v_size])], 0)
             return t+1, k, notes_t, s_t, music
@@ -52,7 +53,7 @@ class RNN_RBM:
 
     def train_model(self, x):
         with tf.variable_scope('train_rnn_rbm'):
-            states = self.__unroll_rnn(x)
+            states, _ = self.__unroll_rnn(x)
             states_tm1 = tf.concat([self.rnn_s0.h, states], 0)[:-1, :]
             bh = tf.matmul(states_tm1, self.Wuh) + self.Buh
             bv = tf.matmul(states_tm1, self.Wuv) + self.Buv
@@ -85,7 +86,7 @@ class RNN_RBM:
         # states = tf.reshape(states, [-1, self.s_size])
         # return states
         x = tf.reshape(x, [1, -1, self.v_size])
-        states, _ = tf.nn.dynamic_rnn(self.rnn, x, initial_state=self.rnn_s0)
+        states, final_state = tf.nn.dynamic_rnn(self.rnn, x, initial_state=self.rnn_s0)
         states = tf.reshape(states, [-1, self.s_size])
-        return states
+        return states, final_state
 
