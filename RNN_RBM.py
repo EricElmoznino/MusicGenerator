@@ -33,7 +33,7 @@ class RNN_RBM:
             bh = tf.matmul(s_tm1, self.Wuh) + self.Buh
             bv = tf.matmul(s_tm1, self.Wuv) + self.Buv
             rbm = RBM(self.W, bv, bh)
-            notes_t = rbm.gibbs_sample(x_t, 25, trainable=False)
+            notes_t = rbm.gibbs_sample(x_t, 25)
             s_t = tf.tanh(tf.matmul(notes_t, self.Wvu) + tf.matmul(s_tm1, self.Wuu) + self.Bu)
             music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
                                        tf.zeros([k-t-1, self.v_size])], 0)

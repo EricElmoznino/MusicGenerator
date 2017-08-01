@@ -12,7 +12,7 @@ class RBM:
     def __sample(self, probabilities):
         return tf.floor(probabilities + tf.random_uniform(tf.shape(probabilities), 0, 1))
 
-    def gibbs_sample(self, x, num_iterations, trainable=True, swap_mem=False):
+    def gibbs_sample(self, x, num_iterations, swap_mem=False):
         # Runs a k-step gibbs chain to sample from the probability distribution of the RBM defined by W, bh, bv
         def gibbs_step(i, k, xk):
             # Runs a single gibbs step. The visible values are initialized to xk
