@@ -53,7 +53,7 @@ class RNN_RBM:
     def train_model(self, x):
         with tf.variable_scope('train_rnn_rbm'):
             states = self.__unroll_rnn(x)
-            states_tm1 = tf.concat([self.rnn_s0, states], 0)[:-1, :]
+            states_tm1 = tf.concat([self.rnn_s0.h, states], 0)[:-1, :]
             bh = tf.matmul(states_tm1, self.Wuh) + self.Buh
             bv = tf.matmul(states_tm1, self.Wuv) + self.Buv
             rbm = RBM(self.W, bv, bh)
