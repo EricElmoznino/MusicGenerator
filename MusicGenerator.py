@@ -35,7 +35,7 @@ class MusicGenerator:
             shutil.rmtree(self.conf.train_log_path)
         os.mkdir(self.conf.train_log_path)
 
-        self.__pre_train(train_path)
+        # self.__pre_train(train_path)
 
         cost, optimizer, summary = self.rnn_rbm.train_model(self.x)
 
@@ -48,7 +48,7 @@ class MusicGenerator:
         print('Starting training\n')
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
-            self.saver.restore(sess, os.path.join(self.conf.train_log_path, 'pre-train.ckpt'))
+            # self.saver.restore(sess, os.path.join(self.conf.train_log_path, 'pre-train.ckpt'))
 
             train_writer = tf.summary.FileWriter(self.conf.train_log_path, sess.graph)
 
