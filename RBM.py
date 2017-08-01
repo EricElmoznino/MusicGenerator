@@ -23,7 +23,7 @@ class RBM:
         count = tf.constant(0)
         _, _, x_sample = cf.while_loop(lambda i, n, *args: i < n,
                                        gibbs_step, [count, num_iterations, x],
-                                       back_prop=trainable, swap_memory=swap_mem)
+                                       back_prop=False, swap_memory=swap_mem)
         return x_sample
 
     def free_energy_cost(self, x, num_iterations):
