@@ -57,10 +57,11 @@ class RNN_RBM:
         with tf.variable_scope('train_ops'):
             cost = rbm.free_energy_cost(x, 15)
             cost_summary = tf.summary.scalar('train_cost', cost)
-            optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
-            gradients = optimizer.compute_gradients(cost)
-            gradients = [(tf.clip_by_value(grad, -10.0, 10.0), var) for grad, var in gradients]
-            optimizer = optimizer.apply_gradients(gradients)
+            # optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
+            # gradients = optimizer.compute_gradients(cost)
+            # gradients = [(tf.clip_by_value(grad, -10.0, 10.0), var) for grad, var in gradients]
+            # optimizer = optimizer.apply_gradients(gradients)
+            optimizer = tf.train.AdamOptimizer().minimize(cost)
 
         return cost, optimizer, cost_summary
 
@@ -68,7 +69,6 @@ class RNN_RBM:
         with tf.variable_scope('pre-train_rbm'):
             rbm = RBM(self.W, self.Buv, self.Buh)
         with tf.variable_scope('pre-train_ops'):
-            # optimizer = rbm.apply_cd(x, 0.01)
             cost = rbm.free_energy_cost(x, 1)
             optimizer = tf.train.AdamOptimizer().minimize(cost)
         return optimizer
