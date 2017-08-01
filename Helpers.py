@@ -8,7 +8,7 @@ import os
 
 class Configuration:
     def __init__(self, train_log_path = './train', epochs=50, pretrain_epochs=100,
-                 batch_size=100, pretrain_batch_size=100, num_timesteps=5):
+                 batch_size=100, pretrain_batch_size=100, num_timesteps=1):
         self.train_log_path = train_log_path
         self.epochs = epochs
         self.pretrain_epochs = pretrain_epochs
