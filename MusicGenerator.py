@@ -80,12 +80,10 @@ class MusicGenerator:
 
         songs = self.manipulator.get_songs(hp.files_at_path(train_path), self.conf.pretrain_batch_size)
         n_batches = len(songs)
-        n_steps = n_batches * self.conf.pretrain_epochs
 
         print('Starting pre-training\n')
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
-            step = 0
             for epoch in range(self.conf.pretrain_epochs):
                 for batch in range(n_batches):
                     song_batch = songs[batch]

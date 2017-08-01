@@ -46,6 +46,8 @@ class RBM:
         bv_delta = tf.multiply(lr/batch_size, tf.reduce_sum(tf.subtract(x, x_sample), 0, True))
         bh_delta = tf.multiply(lr/batch_size, tf.reduce_sum(tf.subtract(h, h_sample), 0, True))
 
-        optimizer = [self.w.assign_add(w_delta), self.bv.assign_add(bv_delta), self.bh.assign_add(bh_delta)]
+        optimizer = [self.w.assign_add(w_delta),
+                     self.bv.assign_add(tf.reshape(bv_delta, [-1])),
+                     self.bh.assign_add(tf.reshape(bh_delta, [-1]))]
         return optimizer
 

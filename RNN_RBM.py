@@ -15,6 +15,7 @@ class RNN_RBM:
         with tf.variable_scope('rnn'):
             self.Wvu = hp.weight_variables([self.v_size, self.s_size], stddev=0.0001, name='weights_input')
             self.Wuu = hp.weight_variables([self.s_size, self.s_size], stddev=0.0001, name='weights_hidden')
+            self.Bu = hp.bias_variables([self.s_size], value=0.0, name='biases_hidden')
             self.rnn_s0 = tf.Variable(tf.zeros([1, self.s_size]), name='initial_state')
 
         with tf.variable_scope('rnn_to_rbm'):
@@ -33,7 +34,7 @@ class RNN_RBM:
             bv = tf.matmul(s_tm1, self.Wuv) + self.Buv
             rbm = RBM(self.W, bv, bh)
             notes_t = rbm.gibbs_sample(x_t, 25, trainable=False)
-            s_t = tf.tanh(tf.matmul(notes_t, self.Wvu) + tf.matmul(s_tm1, self.Wuu))
+            s_t = tf.tanh(tf.matmul(notes_t, self.Wvu) + tf.matmul(s_tm1, self.Wuu) + self.Bu)
             music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
                                        tf.zeros([k-t-1, self.v_size])], 0)
             return t+1, k, notes_t, s_t, music
@@ -48,8 +49,9 @@ class RNN_RBM:
     def train_model(self, x):
         with tf.variable_scope('train_rnn_rbm'):
             states = self.__unroll_rnn(x)
-            bh = tf.matmul(states, self.Wuh) + self.Buh
-            bv = tf.matmul(states, self.Wuv) + self.Buv
+            states_tm1 = tf.concat([self.rnn_s0, states], 0)[:-1, :]
+            bh = tf.matmul(states_tm1, self.Wuh) + self.Buh
+            bv = tf.matmul(states_tm1, self.Wuv) + self.Buv
             rbm = RBM(self.W, bv, bh)
 
         with tf.variable_scope('train_ops'):
@@ -65,18 +67,14 @@ class RNN_RBM:
     def pretrain_model(self, x):
         with tf.variable_scope('pre-train_rbm'):
             rbm = RBM(self.W, self.Buv, self.Buh)
-
         with tf.variable_scope('pre-train_ops'):
-            cost = rbm.free_energy_cost(x, 1)
-            cost_summary = tf.summary.scalar('pre-train_cost', cost)
-            optimizer = tf.train.AdamOptimizer().minimize(cost)
-
-        return cost, optimizer, cost_summary
+            optimizer = rbm.apply_cd(x, 0.01)
+        return optimizer
 
     def __unroll_rnn(self, x):
         def step(s_tm1, x_t):
             x_t = tf.reshape(x_t, [1, -1])
-            state_t = tf.tanh(tf.matmul(x_t, self.Wvu) + tf.matmul(s_tm1, self.Wuu))
+            state_t = tf.tanh(tf.matmul(x_t, self.Wvu) + tf.matmul(s_tm1, self.Wuu) + self.Bu)
             return state_t
         states = tf.scan(step, x, initializer=self.rnn_s0)
         states = tf.reshape(states, [-1, self.s_size])
