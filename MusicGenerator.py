@@ -18,13 +18,12 @@ class MusicGenerator:
         with tf.variable_scope('inputs'):
             self.x = tf.placeholder(tf.float32, shape=[None, self.manipulator.input_length])
 
-        self.saver = tf.train.Saver()
+        self.saver = None
 
     def generate(self, length, primer_song, generation_path, name, primer_length=100):
         primer_song = self.manipulator.get_song(primer_song)[0:primer_length, :]
         model = self.rnn_rbm.generation_model(self.x, length)
         with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
             self.saver.restore(sess, os.path.join(self.conf.train_log_path, 'model.ckpt'))
             music = sess.run(model, feed_dict={self.x: primer_song})
         self.manipulator.write_song(os.path.join(generation_path, name+'.mid'), music)
@@ -49,6 +48,7 @@ class MusicGenerator:
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
             self.saver.restore(sess, os.path.join(self.conf.train_log_path, 'pre-train.ckpt'))
+            self.saver = tf.train.Saver()
 
             train_writer = tf.summary.FileWriter(self.conf.train_log_path, sess.graph)
 
@@ -77,6 +77,7 @@ class MusicGenerator:
 
     def __pre_train(self, train_path):
         optimizer = self.rnn_rbm.pretrain_model(self.x)
+        self.saver = tf.train.Saver()
 
         songs = self.manipulator.get_songs(hp.files_at_path(train_path), self.conf.pretrain_batch_size)
         n_batches = len(songs)
@@ -90,17 +91,3 @@ class MusicGenerator:
                     sess.run(optimizer, feed_dict={self.x: song_batch})
 
             self.saver.save(sess, os.path.join(self.conf.train_log_path, 'pre-train.ckpt'))
-
-    def __run_updates(self, train_path, optimizer, cost, summaries, pre_training):
-        if pre_training:
-            epochs = self.conf.pretrain_epochs
-            batch_size = self.conf.pretrain_batch_size
-            model_name = 'pre_train'
-        else:
-            epochs = self.conf.epochs
-            batch_size = self.conf.batch_size
-            model_name = 'model'
-
-
-
-
