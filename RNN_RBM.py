@@ -4,7 +4,7 @@ import Helpers as hp
 
 class RNN_RBM:
 
-    def __init__(self, visible_size, hidden_size, state_size, use_lstm=True, num_rnn_cells=1):
+    def __init__(self, visible_size, hidden_size, state_size, use_lstm=False, num_rnn_cells=4):
         self.v_size = visible_size
         self.h_size = hidden_size
         self.s_size = state_size
