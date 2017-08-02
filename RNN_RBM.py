@@ -4,20 +4,26 @@ import Helpers as hp
 
 class RNN_RBM:
 
-    def __init__(self, visible_size, hidden_size, state_size, use_lstm=True):
+    def __init__(self, visible_size, hidden_size, state_size, use_lstm=True, num_rnn_cells=1):
         self.v_size = visible_size
         self.h_size = hidden_size
         self.s_size = state_size
         self.use_lstm = use_lstm
+        self.num_rnn_cells = num_rnn_cells
 
         with tf.variable_scope('rbm'):
             self.W = hp.weight_variables([self.v_size, self.h_size], stddev=0.01)
 
         with tf.variable_scope('rnn'):
-            if use_lstm:
-                self.rnn = tf.contrib.rnn.BasicLSTMCell(self.s_size)
+            def cell():
+                if use_lstm:
+                    return tf.contrib.rnn.BasicLSTMCell(self.s_size)
+                else:
+                    return tf.contrib.rnn.BasicRNNCell(self.s_size)
+            if num_rnn_cells > 1:
+                self.rnn = tf.contrib.rnn.MultiRNNCell([cell() for _ in range(num_rnn_cells)])
             else:
-                self.rnn = tf.contrib.rnn.BasicRNNCell(self.s_size)
+                self.rnn = cell()
             self.rnn_s0 = self.rnn.zero_state(1, tf.float32)
 
         with tf.variable_scope('rnn_to_rbm'):
@@ -31,7 +37,8 @@ class RNN_RBM:
             _, primer_state = self.__unroll_rnn(x)
 
         def music_timestep(t, k, x_t, s_tm1, music):
-            _s_tm1 = s_tm1.h if self.use_lstm else s_tm1
+            _s_tm1 = s_tm1[-1] if self.num_rnn_cells > 1 else s_tm1
+            _s_tm1 = _s_tm1.h if self.use_lstm else _s_tm1
             bh = tf.matmul(_s_tm1, self.Wuh) + self.Buh
             bv = tf.matmul(_s_tm1, self.Wuv) + self.Buv
             rbm = RBM(self.W, bv, bh)
@@ -51,7 +58,8 @@ class RNN_RBM:
     def train_model(self, x):
         with tf.variable_scope('train_rnn_rbm'):
             states, _ = self.__unroll_rnn(x)
-            state0 = self.rnn_s0.h if self.use_lstm else self.rnn_s0
+            state0 = self.rnn_s0[-1] if self.num_rnn_cells > 1 else self.rnn_s0
+            state0 = state0.h if self.use_lstm else state0
             states_tm1 = tf.concat([state0, states], 0)[:-1, :]
             bh = tf.matmul(states_tm1, self.Wuh) + self.Buh
             bv = tf.matmul(states_tm1, self.Wuv) + self.Buv
