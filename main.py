@@ -2,7 +2,7 @@ from MusicGenerator import MusicGenerator
 import Helpers as hp
 
 
-musician = MusicGenerator(hp.Configuration(epochs=500, train_log_path='./train5'))
+musician = MusicGenerator(hp.Configuration(epochs=500, train_log_path='./train'))
 # musician.train('/Users/Eric/ML_data/MusicGenerator')
 # music = musician.generate(300, '/Users/Eric/ML_data/MusicGenerator/Every_Time_We_Touch_-_Chorus.mid',
 #                           './generated_music', 'test')
