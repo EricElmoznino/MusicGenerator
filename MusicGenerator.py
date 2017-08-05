@@ -13,7 +13,7 @@ class MusicGenerator:
         self.conf = configuration
         self.manipulator = mm.MidiManipulator(self.conf.num_timesteps)
 
-        self.rnn_rbm = RNN_RBM(self.manipulator.input_length, 50, 100, num_rnn_cells=4, use_lstm=True)
+        self.rnn_rbm = RNN_RBM(self.manipulator.input_length, 75, 100)
 
         with tf.variable_scope('inputs'):
             self.x = tf.placeholder(tf.float32, shape=[None, self.manipulator.input_length])
@@ -76,7 +76,7 @@ class MusicGenerator:
             self.saver.save(sess, os.path.join(self.conf.train_log_path, 'model.ckpt'))
 
     def __pre_train(self, train_path):
-        optimizer = self.rnn_rbm.pretrain_model(self.x)
+        _, optimizer = self.rnn_rbm.pretrain_model(self.x)
         self.saver = tf.train.Saver()
 
         songs = self.manipulator.get_songs(hp.files_at_path(train_path), self.conf.pretrain_batch_size)

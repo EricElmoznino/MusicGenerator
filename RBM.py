@@ -33,5 +33,6 @@ class RBM:
             return -tf.reduce_sum(tf.log(1 + tf.exp(tf.matmul(_x, self.w) + self.bh)), 1) - \
                    tf.reduce_sum(tf.multiply(_x, self.bv), 1)
 
-        return tf.reduce_mean(free_energy(x) - free_energy(x_sample))
+        cost = tf.reduce_mean(free_energy(x) - free_energy(x_sample))
+        return cost
 

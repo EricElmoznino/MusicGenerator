@@ -4,7 +4,7 @@ import Helpers as hp
 
 class RNN_RBM:
 
-    def __init__(self, visible_size, hidden_size, state_size, use_lstm=False, num_rnn_cells=2):
+    def __init__(self, visible_size, hidden_size, state_size, use_lstm=False, num_rnn_cells=1):
         self.v_size = visible_size
         self.h_size = hidden_size
         self.s_size = state_size
@@ -81,7 +81,7 @@ class RNN_RBM:
         with tf.variable_scope('pre-train_ops'):
             cost = rbm.free_energy_cost(x, 1)
             optimizer = tf.train.AdamOptimizer().minimize(cost)
-        return optimizer
+        return cost, optimizer
 
     def __unroll_rnn(self, x):
         x = tf.reshape(x, [1, -1, self.v_size])
