@@ -5,6 +5,7 @@ from RNN_RBM import RNN_RBM
 import shutil
 import os
 import time
+from random import shuffle
 
 
 class MusicGenerator:
@@ -56,9 +57,9 @@ class MusicGenerator:
             step = 0
             for epoch in range(1, self.conf.epochs + 1):
                 epoch_cost = 0
+                shuffle(songs)
                 for batch in range(n_batches):
                     song_batch = songs[batch]
-
                     if step % max(int(n_steps / 1000), 1) == 0:
                         _, c, s = sess.run([optimizer, cost, summaries],
                                            feed_dict={self.x: song_batch})
@@ -67,12 +68,10 @@ class MusicGenerator:
                     else:
                         _, c = sess.run([optimizer, cost],
                                         feed_dict={self.x: song_batch})
-
                     epoch_cost += c
                     step += 1
 
                 hp.log_epoch(epoch, self.conf.epochs, epoch_cost / n_batches)
-
             self.saver.save(sess, os.path.join(self.conf.train_log_path, 'model.ckpt'))
 
     def __pre_train(self, train_path):
@@ -86,6 +85,7 @@ class MusicGenerator:
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
             for epoch in range(self.conf.pretrain_epochs):
+                shuffle(songs)
                 for batch in range(n_batches):
                     song_batch = songs[batch]
                     sess.run(optimizer, feed_dict={self.x: song_batch})
