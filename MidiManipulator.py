@@ -14,24 +14,24 @@ class MidiManipulator:
 
     @property
     def input_length(self):
-        return 2 * self.span * self.num_timesteps
-        # return self.span * self.num_timesteps
+        # return 2 * self.span * self.num_timesteps
+        return self.span * self.num_timesteps
 
 
     def write_song(self, path, song):
         #Reshape the song into a format that midi_manipulation can understand, and then write the song to disk
-        song = np.reshape(song, (song.shape[0]*self.num_timesteps, 2*self.span))
-        self.note_state_matrix_to_midi(song, path)
-        # song = np.reshape(song, (song.shape[0]*self.num_timesteps, self.span))
-        # midiwrite(path, song, r=(self.lower_bound, self.upper_bound))
+        # song = np.reshape(song, (song.shape[0]*self.num_timesteps, 2*self.span))
+        # self.note_state_matrix_to_midi(song, path)
+        song = np.reshape(song, (song.shape[0]*self.num_timesteps, self.span))
+        midiwrite(path, song, r=(self.lower_bound, self.upper_bound))
 
     def get_song(self, path):
         #Load the song and reshape it to place multiple timesteps next to each other
-        song = np.array(self.midi_to_note_state_matrix(path))
-        # song = np.array(midiread(path, r=(self.lower_bound, self.upper_bound)).piano_roll)
+        # song = np.array(self.midi_to_note_state_matrix(path))
+        song = np.array(midiread(path, r=(self.lower_bound, self.upper_bound)).piano_roll)
         song = song[:int(song.shape[0]/self.num_timesteps)*self.num_timesteps]
-        song = np.reshape(song, [int(song.shape[0]/self.num_timesteps), 2*self.span*self.num_timesteps])
-        # song = np.reshape(song, [int(song.shape[0]/self.num_timesteps), self.span*self.num_timesteps])
+        # song = np.reshape(song, [int(song.shape[0]/self.num_timesteps), 2*self.span*self.num_timesteps])
+        song = np.reshape(song, [int(song.shape[0]/self.num_timesteps), self.span*self.num_timesteps])
         return song
 
     def get_songs(self, files, max_size):
