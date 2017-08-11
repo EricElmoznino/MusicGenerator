@@ -14,8 +14,8 @@ class MidiManipulator:
 
     @property
     def input_length(self):
-        # return 2 * self.span * self.num_timesteps
-        return self.span * self.num_timesteps
+        return 2 * self.span * self.num_timesteps
+        # return self.span * self.num_timesteps
 
 
     def write_song(self, path, song):
@@ -31,6 +31,7 @@ class MidiManipulator:
         # song = np.array(midiread(path, r=(self.lower_bound, self.upper_bound)).piano_roll)
         song = song[:int(song.shape[0]/self.num_timesteps)*self.num_timesteps]
         song = np.reshape(song, [int(song.shape[0]/self.num_timesteps), 2*self.span*self.num_timesteps])
+        # song = np.reshape(song, [int(song.shape[0]/self.num_timesteps), self.span*self.num_timesteps])
         return song
 
     def get_songs(self, files, max_size):
