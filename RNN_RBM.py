@@ -32,33 +32,46 @@ class RNN_RBM:
 
     def generation_model(self, x, length):
         with tf.variable_scope('generation'):
-            primer_state = self.__unroll_rnn(x)
-            primer_u, primer_q = primer_state.h[-1], primer_state.c[-1]
+            primer_states = self.__unroll_rnn(x)
+            if self.num_rnn_cells > 1:
+                primer_state = tuple([tf.contrib.rnn.LSTMStateTuple(state.c[-1], state.h[-1]) for state in primer_states])
+            else:
+                primer_state = tf.contrib.rnn.LSTMStateTuple(primer_states.c[-1], primer_states.h[-1])
 
-        def music_timestep(t, k, x_t, u_tm1, q_tm1, music):
+        def music_timestep(t, k, x_t, s_tm1, music):
+            if self.num_rnn_cells > 1:
+                u_tm1 = s_tm1[-1].c
+                q_tm1 = s_tm1[-1].h
+            else:
+                u_tm1 = s_tm1.c
+                q_tm1 = s_tm1.h
             bh = tf.matmul(u_tm1, self.Wuh) + tf.matmul(q_tm1, self.Wqh) + self.Buh
             bv = tf.matmul(u_tm1, self.Wuv) + tf.matmul(q_tm1, self.Wqv) + self.Buv
             rbm = RBM(self.W, bv, bh)
             notes_t = rbm.gibbs_sample(x_t, 25)
-            _, s_t = self.rnn(notes_t, tf.contrib.rnn.LSTMStateTuple(u_tm1, q_tm1))
+            _, s_t = self.rnn(notes_t, s_tm1)
             music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
                                        tf.zeros([k-t-1, self.v_size])], 0)
-            return t+1, k, notes_t, u_tm1, s_t.h, s_t.c, music
+            return t+1, k, notes_t, s_t, music
 
         count = tf.constant(0)
         music = tf.zeros([length, self.v_size])
-        _, _, _, _, _, music = tf.while_loop(lambda t, k, *args: t < k, music_timestep,
-                                          [count, length, tf.zeros([1, self.v_size]), primer_u, primer_q, music],
+        _, _, _, _, music = tf.while_loop(lambda t, k, *args: t < k, music_timestep,
+                                          [count, length, tf.zeros([1, self.v_size]), primer_state, music],
                                           back_prop=False)
         return music
 
     def train_model(self, x):
         with tf.variable_scope('train_rnn_rbm'):
             states = self.__unroll_rnn(x)
-            u_t = tf.reshape(states.h, [-1, self.s_size])
-            q_t = tf.reshape(states.c, [-1, self.s_size])
-            u_tm1 = tf.concat([self.rnn_s0.h, u_t], 0)[:-1, :]
-            q_tm1 = tf.concat([self.rnn_s0.h, q_t], 0)[:-1, :]
+            state0 = self.rnn_s0
+            if self.num_rnn_cells > 1:
+                states = states[-1]
+                state0 = state0[-1]
+            u_t = tf.reshape(states.c, [-1, self.s_size])
+            q_t = tf.reshape(states.h, [-1, self.s_size])
+            u_tm1 = tf.concat([state0.c, u_t], 0)[:-1, :]
+            q_tm1 = tf.concat([state0.h, q_t], 0)[:-1, :]
             bh = tf.matmul(u_tm1, self.Wuh) + tf.matmul(q_tm1, self.Wqh) + self.Buh
             bv = tf.matmul(u_tm1, self.Wuv) + tf.matmul(q_tm1, self.Wqv) + self.Buv
             rbm = RBM(self.W, bv, bh)
