@@ -2,6 +2,7 @@ import tensorflow as tf
 import Helpers as hp
 import MidiManipulator as mm
 from RNN_RBM import RNN_RBM
+from RNN_DBN import RNN_DBN
 import shutil
 import os
 import time
@@ -95,7 +96,7 @@ class MusicGenerator:
         self.conf = configuration
         self.manipulator = mm.MidiManipulator(self.conf.num_timesteps)
 
-        self.rnn_rbm = RNN_RBM(self.manipulator.input_length, [75], 100, num_rnn_cells=4)
+        self.rnn_rbm = RNN_DBN(self.manipulator.input_length, [75], 100, num_rnn_cells=4)
 
         with tf.variable_scope('inputs'):
             self.x = tf.placeholder(tf.float32, shape=[None, self.manipulator.input_length])

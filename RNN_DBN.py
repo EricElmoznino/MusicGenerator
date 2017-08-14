@@ -2,7 +2,7 @@ import tensorflow as tf
 from RBM import RBM
 import Helpers as hp
 
-class RNN_RBM:
+class RNN_DBN:
 
     def __init__(self, visible_size, hidden_sizes, state_size, num_rnn_cells=1):
         self.dbn_sizes = [visible_size] + hidden_sizes
