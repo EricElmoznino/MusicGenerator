@@ -37,9 +37,8 @@ class MusicGenerator:
 
         self.__pre_train(train_path)
 
-        cost, optimizer, summary = self.rnn_rbm.train_model(self.x)
-
-        summaries = tf.summary.merge([summary])
+        cost, optimizer, loglikelihood, summaries = self.rnn_rbm.train_model(self.x)
+        summaries = tf.summary.merge([summaries])
 
         songs = self.manipulator.get_songs(hp.files_at_path(train_path), self.conf.batch_size)
         n_batches = len(songs)
@@ -56,22 +55,22 @@ class MusicGenerator:
             start_time = time.time()
             step = 0
             for epoch in range(1, self.conf.epochs + 1):
-                epoch_cost = 0
+                epoch_ll = 0
                 shuffle(songs)
                 for batch in range(n_batches):
                     song_batch = songs[batch]
                     if step % max(int(n_steps / 1000), 1) == 0:
-                        _, c, s = sess.run([optimizer, cost, summaries],
+                        _, ll, s = sess.run([optimizer, loglikelihood, summaries],
                                            feed_dict={self.x: song_batch})
                         train_writer.add_summary(s, step)
-                        hp.log_step(step, n_steps, start_time, c)
+                        hp.log_step(step, n_steps, start_time, ll)
                     else:
-                        _, c = sess.run([optimizer, cost],
+                        _, ll = sess.run([optimizer, loglikelihood],
                                         feed_dict={self.x: song_batch})
-                    epoch_cost += c
+                    epoch_ll += ll
                     step += 1
 
-                hp.log_epoch(epoch, self.conf.epochs, epoch_cost / n_batches)
+                hp.log_epoch(epoch, self.conf.epochs, epoch_ll / n_batches)
             self.saver.save(sess, os.path.join(self.conf.train_log_path, 'model.ckpt'))
 
     def __pre_train(self, train_path):

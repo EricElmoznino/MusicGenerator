@@ -48,7 +48,7 @@ class RNN_RBM:
             bh = tf.matmul(u_tm1, self.Wuh) + tf.matmul(q_tm1, self.Wqh) + self.Buh
             bv = tf.matmul(u_tm1, self.Wuv) + tf.matmul(q_tm1, self.Wqv) + self.Buv
             rbm = RBM(self.W, bv, bh)
-            notes_t = rbm.gibbs_sample(x_t, 25)
+            _, notes_t = rbm.gibbs_sample(x_t, 25)
             _, s_t = self.rnn(notes_t, s_tm1)
             music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
                                        tf.zeros([k-t-1, self.v_size])], 0)
@@ -77,20 +77,21 @@ class RNN_RBM:
             rbm = RBM(self.W, bv, bh)
 
         with tf.variable_scope('train_ops'):
-            cost = rbm.free_energy_cost(x, 15)
-            cost_summary = tf.summary.scalar('train_cost', cost)
+            cost, loglikelihood = rbm.free_energy_cost(x, 15)
+            cost_summary = tf.summary.scalar('free_energy', cost)
+            ll_summary = tf.summary.scalar('log_likelihood', loglikelihood)
             optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
             gradients = optimizer.compute_gradients(cost)
             gradients = [(tf.clip_by_value(grad, -10.0, 10.0), var) for grad, var in gradients]
             optimizer = optimizer.apply_gradients(gradients)
 
-        return cost, optimizer, cost_summary
+        return cost, optimizer, loglikelihood, [cost_summary, ll_summary]
 
     def pretrain_model(self, x):
         with tf.variable_scope('pre-train_rbm'):
             rbm = RBM(self.W, self.Buv, self.Buh)
         with tf.variable_scope('pre-train_ops'):
-            cost = rbm.free_energy_cost(x, 1)
+            cost, _ = rbm.free_energy_cost(x, 1)
             optimizer = tf.train.AdamOptimizer().minimize(cost)
         return cost, optimizer
 
