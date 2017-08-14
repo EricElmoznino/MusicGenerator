@@ -1,5 +1,6 @@
 import tensorflow as tf
 from RBM import RBM
+from DBN import DBN
 import Helpers as hp
 
 class RNN_DBN:
@@ -43,20 +44,25 @@ class RNN_DBN:
             else:
                 primer_state = tf.contrib.rnn.LSTMStateTuple(primer_states.c[-1], primer_states.h[-1])
 
-        def music_timestep(t, k, x_t, s_tm1, music):
+        def music_timestep(t, k, x_tm1, s_tm1, music):
             if self.num_rnn_cells > 1:
                 u_tm1 = s_tm1[-1].c
                 q_tm1 = s_tm1[-1].h
             else:
                 u_tm1 = s_tm1.c
                 q_tm1 = s_tm1.h
-            bh = tf.matmul(u_tm1, self.Wu[1]) + tf.matmul(q_tm1, self.Wq[1]) + self.B[1]
-            bv = tf.matmul(u_tm1, self.Wu[0]) + tf.matmul(q_tm1, self.Wq[0]) + self.B[0]
-            rbm = RBM(self.W[0], bv, bh)
-            _, notes_t = rbm.gibbs_sample(x_t, 25)
+
+            dbn_biases = []
+            for wu, wq, b in zip(self.Wu, self.Wq, self.B):
+                dbn_biases.append(tf.matmul(u_tm1, wu) + tf.matmul(q_tm1, wq) + b)
+
+            dbn = DBN(self.W, dbn_biases)
+            _, notes_t = dbn.gen_sample(25, x=x_tm1)
+
             _, s_t = self.rnn(notes_t, s_tm1)
             music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
                                        tf.zeros([k-t-1, self.v_size])], 0)
+
             return t+1, k, notes_t, s_t, music
 
         count = tf.constant(0)
