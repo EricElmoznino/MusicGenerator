@@ -32,7 +32,7 @@ class RNN_DBN:
             for i, s in enumerate(self.dbn_sizes):
                 self.Wu.append(hp.weight_variables([self.s_size, s], stddev=0.0001, name='weights_u'+str(i+1)))
                 self.Wq.append(hp.weight_variables([self.s_size, s], stddev=0.0001, name='weights_q'+str(i+1)))
-                self.B.append(hp.bias_variables([self.s], value=0.0, name='biases_'+str(i+1)))
+                self.B.append(hp.bias_variables([s], value=0.0, name='biases_'+str(i+1)))
 
     def generation_model(self, x, length):
         with tf.variable_scope('generation'):
