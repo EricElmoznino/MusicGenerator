@@ -5,6 +5,7 @@ import Helpers as hp
 class RNN_DBN:
 
     def __init__(self, visible_size, hidden_sizes, state_size, num_rnn_cells=1):
+        self.v_size = visible_size
         self.dbn_sizes = [visible_size] + hidden_sizes
         self.s_size = state_size
         self.num_rnn_cells = num_rnn_cells
@@ -101,7 +102,7 @@ class RNN_DBN:
 
     def __unroll_rnn(self, x):
         def recurrence(s_tm1, _x):
-            _x = tf.reshape(_x, [1, self.dbn_sizes[0]])
+            _x = tf.reshape(_x, [1, self.v_size])
             _, s_t = self.rnn(_x, s_tm1)
             return s_t
         states = tf.scan(recurrence, x, initializer=self.rnn_s0)
