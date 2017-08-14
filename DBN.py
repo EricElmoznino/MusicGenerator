@@ -19,7 +19,7 @@ class DBN:
 
         # Sample from the top layer
         top_rbm = RBM.RBM(self.ws[-1], self.bs[-2], self.bs[-1])
-        x_sample = top_rbm.gibbs_sample(x, k)
+        _, x_sample = top_rbm.gibbs_sample(x, k)
 
         # Propagate sample down to visible layer
         for i in reversed(range(len(self.ws) - 1)):

@@ -57,7 +57,7 @@ class RNN_DBN:
                 dbn_biases.append(tf.matmul(u_tm1, wu) + tf.matmul(q_tm1, wq) + b)
 
             dbn = DBN(self.W, dbn_biases)
-            _, notes_t = dbn.gen_sample(25, x=x_tm1)
+            notes_t = dbn.gen_sample(25, x=x_tm1)
 
             _, s_t = self.rnn(notes_t, s_tm1)
             music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
@@ -83,28 +83,54 @@ class RNN_DBN:
             q_t = tf.reshape(states.h, [-1, self.s_size])
             u_tm1 = tf.concat([state0.c, u_t], 0)[:-1, :]
             q_tm1 = tf.concat([state0.h, q_t], 0)[:-1, :]
-            bh = tf.matmul(u_tm1, self.Wu[1]) + tf.matmul(q_tm1, self.Wq[1]) + self.B[1]
-            bv = tf.matmul(u_tm1, self.Wu[0]) + tf.matmul(q_tm1, self.Wq[0]) + self.B[0]
-            rbm = RBM(self.W[0], bv, bh)
+
+            rbm_layers = [x]
+            rbms = []
+            for i in range(len(self.dbn_sizes) - 1):
+                bv = tf.matmul(u_tm1, self.Wu[i]) + tf.matmul(q_tm1, self.Wq[i]) + self.B[i]
+                bh = tf.matmul(u_tm1, self.Wu[i+1]) + tf.matmul(q_tm1, self.Wq[i+1]) + self.B[i+1]
+                rbms.append(RBM(self.W[i], bv, bh))
+                rbm_layers.append(tf.sigmoid(tf.matmul(rbm_layers[-1], self.W[i]) + bh))
+                # rbm_layers.append(tf.sigmoid(tf.matmul(rbm_layers[-1], self.W[i]) + self.B[i+1]))
 
         with tf.variable_scope('train_ops'):
-            cost, loglikelihood = rbm.free_energy_cost(x, 15)
-            cost_summary = tf.summary.scalar('free_energy', cost)
-            ll_summary = tf.summary.scalar('log_likelihood', loglikelihood)
-            optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
-            gradients = optimizer.compute_gradients(cost)
-            gradients = [(tf.clip_by_value(grad, -10.0, 10.0), var) for grad, var in gradients]
-            optimizer = optimizer.apply_gradients(gradients)
+            costs = []
+            optimizers = []
+            loglikelihoods = []
+            summaries = []
+            for i in range(len(rbms)):
+                cost, loglikelihood = rbms[i].free_energy_cost(rbm_layers[i], 15)
+                cost_summary = tf.summary.scalar('free_energy', cost)
+                ll_summary = tf.summary.scalar('log_likelihood', loglikelihood)
+                optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
+                gradients = optimizer.compute_gradients(cost)
+                gradients = [(tf.clip_by_value(grad, -10.0, 10.0), var)
+                             for grad, var in gradients if grad is not None]
+                optimizer = optimizer.apply_gradients(gradients)
+                costs.append(cost)
+                optimizers.append(optimizer)
+                loglikelihoods.append(loglikelihood)
+                summaries.append([cost_summary, ll_summary])
 
-        return cost, optimizer, loglikelihood, [cost_summary, ll_summary]
+        return costs, optimizers, loglikelihoods, summaries
 
     def pretrain_model(self, x):
-        with tf.variable_scope('pre-train_rbm'):
-            rbm = RBM(self.W[0], self.B[0], self.B[1])
+        with tf.variable_scope('pre-train_dbn'):
+            rbm_layers = [x]
+            rbms = []
+            for i in range(len(self.dbn_sizes) - 1):
+                rbms.append(RBM(self.W[i], self.B[i], self.B[i+1]))
+                rbm_layers.append(tf.sigmoid(tf.matmul(rbm_layers[-1], self.W[i]) + self.B[i+1]))
+
         with tf.variable_scope('pre-train_ops'):
-            cost, _ = rbm.free_energy_cost(x, 1)
-            optimizer = tf.train.AdamOptimizer().minimize(cost)
-        return cost, optimizer
+            costs = []
+            optimizers = []
+            for i in range(len(rbms)):
+                cost, _ = rbms[i].free_energy_cost(rbm_layers[i], 1)
+                optimizer = tf.train.AdamOptimizer().minimize(cost)
+                costs.append(cost)
+                optimizers.append(optimizer)
+        return costs, optimizers
 
     def __unroll_rnn(self, x):
         def recurrence(s_tm1, _x):
