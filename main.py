@@ -2,7 +2,7 @@ from MusicGenerator import MusicGenerator
 import Helpers as hp
 
 
-musician = MusicGenerator(hp.Configuration(epochs=100, train_log_path='./dbn', pretrain_epochs=0))
+musician = MusicGenerator(hp.Configuration(epochs=200, train_log_path='./dbn4m'))
 musician.train('./training_songs/Pop')
 music = musician.generate(3200, './training_songs/Pop/I_Kissed_A_Girl_-_Chorus.mid',
-                          './generated_music', 'dbn')
+                          './generated_music', 'dbn4m')
