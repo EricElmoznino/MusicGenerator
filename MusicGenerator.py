@@ -72,7 +72,8 @@ class MusicGenerator:
                         epoch_ll += ll
                         step += 1
 
-                    hp.log_epoch(epoch, self.conf.epochs, dbn_layer, epoch_ll / n_batches)
+                    hp.log_epoch(step, n_steps, epoch, self.conf.epochs,
+                                 dbn_layer, start_time, epoch_ll / n_batches)
                 print('\n', 'Finished training dbn layer', dbn_layer, '\n')
                 dbn_layer += 1
 

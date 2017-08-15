@@ -32,9 +32,13 @@ def log_step(step, total_steps, start_time, error):
           'Error:', error)
 
 
-def log_epoch(epoch, total_epochs, dbn_layer, error):
-    print('\nEpoch', epoch, 'completed out of', total_epochs, '(dbn layer '+str(dbn_layer)+')',
-          ':\tError:', error, '\n')
+def log_epoch(step, total_steps, epoch, total_epochs, dbn_layer, start_time, error):
+    progress = int(step / float(total_steps) * 100)
+    seconds = time.time() - start_time
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    print('\n', str(progress)+'%', 'Epoch', epoch, 'completed out of', total_epochs, '(dbn layer '+str(dbn_layer)+')',
+          ':\tError:', error, int(h), 'hours,', int(m), 'minutes,', int(s), 'seconds', '\n')
 
 
 def weight_variables(shape, stddev=0.1, name='weights'):
