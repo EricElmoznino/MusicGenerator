@@ -19,7 +19,7 @@ class MidiManipulator:
         midiwrite(path, song, r=(self.lower_bound, self.upper_bound))
 
     def get_song(self, path):
-        song = np.array(midiread(path, r=(self.lower_bound, self.upper_bound), dt=0.3).piano_roll)
+        song = np.array(midiread(path, r=(self.lower_bound, self.upper_bound)).piano_roll)
         song = song[:int(song.shape[0]/self.num_timesteps)*self.num_timesteps]
         song = np.reshape(song, [int(song.shape[0]/self.num_timesteps), self.span*self.num_timesteps])
         return song
