@@ -57,7 +57,8 @@ class RNN_DBN:
                 dbn_biases.append(tf.matmul(u_tm1, wu) + tf.matmul(q_tm1, wq) + b)
 
             dbn = DBN(self.W, dbn_biases)
-            notes_t = dbn.gen_sample(25, x=x_tm1)
+            # notes_t = dbn.gen_sample(25, x=x_tm1)
+            notes_t = dbn.gen_sample(25)
 
             _, s_t = self.rnn(notes_t, s_tm1)
             music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
