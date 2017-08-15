@@ -32,8 +32,8 @@ def log_step(step, total_steps, start_time, error):
           'Error:', error)
 
 
-def log_epoch(epoch, total_epochs, error):
-    print('\nEpoch', epoch, 'completed out of', total_epochs,
+def log_epoch(epoch, total_epochs, dbn_layer, error):
+    print('\nEpoch', epoch, 'completed out of', total_epochs, '(dbn layer '+str(dbn_layer)+')',
           ':\tError:', error, '\n')
 
 

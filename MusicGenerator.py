@@ -154,8 +154,8 @@ class MusicGenerator:
                         epoch_ll += ll
                         step += 1
 
-                    hp.log_epoch(epoch, self.conf.epochs, epoch_ll / n_batches)
-                print('\nFinished training dbn layer', dbn_layer, '\n')
+                    hp.log_epoch(epoch, self.conf.epochs, dbn_layer, epoch_ll / n_batches)
+                print('\n', 'Finished training dbn layer', dbn_layer, '\n')
             self.saver.save(sess, os.path.join(self.conf.train_log_path, 'model.ckpt'))
 
     def __pre_train(self, train_path):
