@@ -37,7 +37,7 @@ def log_epoch(step, total_steps, epoch, total_epochs, dbn_layer, start_time, err
     seconds = time.time() - start_time
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
-    print('\n', str(progress)+'%', 'Epoch', epoch, 'completed out of', total_epochs, '(dbn layer '+str(dbn_layer)+')',
+    print(str(progress)+'%', 'Epoch', epoch, 'completed out of', total_epochs, '(dbn layer '+str(dbn_layer)+')',
           ':\tError:', error, int(h), 'hours,', int(m), 'minutes,', int(s), 'seconds', '\n')
 
 
