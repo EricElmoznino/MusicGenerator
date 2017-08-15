@@ -96,7 +96,7 @@ class MusicGenerator:
         self.conf = configuration
         self.manipulator = mm.MidiManipulator(self.conf.num_timesteps)
 
-        self.rnn_rbm = RNN_DBN(self.manipulator.input_length, [75, 75], 100)
+        self.rnn_rbm = RNN_DBN(self.manipulator.input_length, [75], 100)
 
         with tf.variable_scope('inputs'):
             self.x = tf.placeholder(tf.float32, shape=[None, self.manipulator.input_length])
@@ -156,6 +156,8 @@ class MusicGenerator:
 
                     hp.log_epoch(epoch, self.conf.epochs, dbn_layer, epoch_ll / n_batches)
                 print('\n', 'Finished training dbn layer', dbn_layer, '\n')
+                dbn_layer += 1
+
             self.saver.save(sess, os.path.join(self.conf.train_log_path, 'model.ckpt'))
 
     def __pre_train(self, train_path):
