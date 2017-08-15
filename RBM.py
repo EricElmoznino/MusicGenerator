@@ -40,7 +40,7 @@ class RBM:
         safe_xprob = tf.where(tf.equal(x_prob, 0.0), tf.ones_like(x_prob), x_prob)
         safe_1mxprob = tf.where(tf.equal(1.0-x_prob, 0.0), tf.ones_like(1.0-x_prob), 1.0-x_prob)
         loglikelihood = tf.multiply(x, tf.log(safe_xprob)) + tf.multiply(1.0-x, tf.log(safe_1mxprob))
-        loglikelihood = tf.reduce_mean(loglikelihood)
+        loglikelihood = tf.reduce_mean(tf.reduce_sum(loglikelihood, 1))
 
         return cost, loglikelihood
 

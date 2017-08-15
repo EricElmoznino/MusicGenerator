@@ -57,8 +57,7 @@ class RNN_DBN:
                 dbn_biases.append(tf.matmul(u_tm1, wu) + tf.matmul(q_tm1, wq) + b)
 
             dbn = DBN(self.W, dbn_biases)
-            # notes_t = dbn.gen_sample(25, x=x_tm1)
-            notes_t = dbn.gen_sample(25)
+            notes_t = dbn.gen_sample(25, x=x_tm1)
 
             _, s_t = self.rnn(notes_t, s_tm1)
             music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
@@ -103,7 +102,7 @@ class RNN_DBN:
                 cost, loglikelihood = rbms[i].free_energy_cost(rbm_layers[i], 15)
                 cost_summary = tf.summary.scalar('free_energy', cost)
                 ll_summary = tf.summary.scalar('log_likelihood', loglikelihood)
-                optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
+                optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001)
                 gradients = optimizer.compute_gradients(cost)
                 gradients = [(tf.clip_by_value(grad, -10.0, 10.0), var)
                              for grad, var in gradients if grad is not None]
