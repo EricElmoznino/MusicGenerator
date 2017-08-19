@@ -68,7 +68,7 @@ class RNN_DBN:
         count = tf.constant(0)
         music = tf.zeros([length, self.v_size])
         _, _, _, _, music = tf.while_loop(lambda t, k, *args: t < k, music_timestep,
-                                          [count, length, tf.zeros([1, self.v_size]), self.rnn_s0, music],
+                                          [count, length, tf.zeros([1, self.v_size]), primer_state, music],
                                           back_prop=False)
         return music
 
