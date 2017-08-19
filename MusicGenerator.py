@@ -15,7 +15,7 @@ class MusicGenerator:
         self.conf = configuration
         self.manipulator = mm.MidiManipulator(self.conf.num_timesteps)
 
-        self.rnn_rbm = RNN_DBN(self.manipulator.input_length, [75, 75], 100)
+        self.rnn_rbm = RNN_DBN(self.manipulator.input_length, [150], 100)
 
         with tf.variable_scope('inputs'):
             self.x = tf.placeholder(tf.float32, shape=[None, self.manipulator.input_length])
@@ -24,6 +24,7 @@ class MusicGenerator:
 
     def generate(self, length, primer_song, generation_path, name, primer_length=100):
         primer_song = self.manipulator.get_song(primer_song)[0:primer_length, :]
+        primer_song = self.manipulator.get_song(primer_song)[0:0, :]
         model = self.rnn_rbm.generation_model(self.x, length)
         with tf.Session() as sess:
             self.saver.restore(sess, os.path.join(self.conf.train_log_path, 'model.ckpt'))
