@@ -20,14 +20,17 @@ class RNN_DBN:
                 self.W.append(hp.weight_variables([v, h], stddev=0.01, name='layer_'+str(i+1)))
 
         with tf.variable_scope('rnn'):
-            # if num_rnn_cells > 1:
-            #     self.rnn = tf.contrib.rnn.MultiRNNCell(
-            #         [tf.contrib.rnn.BasicLSTMCell(self.s_size) for _ in range(num_rnn_cells)]
-            #     )
-            # else:
-            #     self.rnn = tf.contrib.rnn.BasicLSTMCell(self.s_size)
-            # self.rnn_s0 = self.rnn.zero_state(1, tf.float32)
-            self.lstm = LSTM(self.v_size, self.s_size)
+            if num_rnn_cells > 1:
+                self.rnn = tf.contrib.rnn.MultiRNNCell(
+                    [tf.contrib.rnn.LSTMCell(self.s_size, forget_bias=0.0,
+                                             initializer=tf.truncated_normal_initializer(stddev=0.0001))
+                     for _ in range(num_rnn_cells)]
+                )
+            else:
+                self.rnn = tf.contrib.rnn.LSTMCell(self.s_size, forget_bias=0.0,
+                                                   initializer=tf.truncated_normal_initializer(stddev=0.0001))
+            self.rnn_s0 = self.rnn.zero_state(1, tf.float32)
+            # self.lstm = LSTM(self.v_size, self.s_size)
 
         with tf.variable_scope('rnn_to_dbn'):
             self.Wu = []
@@ -40,34 +43,21 @@ class RNN_DBN:
 
     def generation_model(self, x, length):
         with tf.variable_scope('generation'):
-            # primer_states = self.__unroll_rnn(x)
-            # if self.num_rnn_cells > 1:
-            #     primer_state = tuple([tf.contrib.rnn.LSTMStateTuple(state.c[-1], state.h[-1]) for state in primer_states])
-            # else:
-            #     primer_state = tf.contrib.rnn.LSTMStateTuple(primer_states.c[-1], primer_states.h[-1])
-            primer_states = self.lstm.unroll(x)
-            primer_state = [tf.reshape(s[-1], [1, -1]) for s in primer_states]
+            primer_states = self.__unroll_rnn(x)
+            if self.num_rnn_cells > 1:
+                primer_state = tuple([tf.contrib.rnn.LSTMStateTuple(state.c[-1], state.h[-1]) for state in primer_states])
+            else:
+                primer_state = tf.contrib.rnn.LSTMStateTuple(primer_states.c[-1], primer_states.h[-1])
+            # primer_states = self.lstm.unroll(x)
+            # primer_state = [tf.reshape(s[-1], [1, -1]) for s in primer_states]
 
         def music_timestep(t, k, x_tm1, s_tm1, music):
-            # if self.num_rnn_cells > 1:
-            #     u_tm1 = s_tm1[-1].c
-            #     q_tm1 = s_tm1[-1].h
-            # else:
-            #     u_tm1 = s_tm1.c
-            #     q_tm1 = s_tm1.h
-            #
-            # dbn_biases = []
-            # for wu, wq, b in zip(self.Wu, self.Wq, self.B):
-            #     dbn_biases.append(tf.matmul(u_tm1, wu) + tf.matmul(q_tm1, wq) + b)
-            #
-            # dbn = DBN(self.W, dbn_biases)
-            # notes_t = dbn.gen_sample(25, x=x_tm1)
-            #
-            # _, s_t = self.rnn(notes_t, s_tm1)
-            # music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
-            #                            tf.zeros([k-t-1, self.v_size])], 0)
-
-            u_tm1, q_tm1, _ = s_tm1
+            if self.num_rnn_cells > 1:
+                u_tm1 = s_tm1[-1].c
+                q_tm1 = s_tm1[-1].h
+            else:
+                u_tm1 = s_tm1.c
+                q_tm1 = s_tm1.h
 
             dbn_biases = []
             for wu, wq, b in zip(self.Wu, self.Wq, self.B):
@@ -76,11 +66,24 @@ class RNN_DBN:
             dbn = DBN(self.W, dbn_biases)
             notes_t = dbn.gen_sample(25, x=x_tm1)
 
-            s_t = self.lstm.step(notes_t, s_tm1)
+            _, s_t = self.rnn(notes_t, s_tm1)
             music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
-                                       tf.zeros([k - t - 1, self.v_size])], 0)
+                                       tf.zeros([k-t-1, self.v_size])], 0)
 
-            return t+1, k, notes_t, s_t, music
+            # u_tm1, q_tm1, _ = s_tm1
+            #
+            # dbn_biases = []
+            # for wu, wq, b in zip(self.Wu, self.Wq, self.B):
+            #     dbn_biases.append(tf.matmul(u_tm1, wu) + tf.matmul(q_tm1, wq) + b)
+            #
+            # dbn = DBN(self.W, dbn_biases)
+            # notes_t = dbn.gen_sample(25, x=x_tm1)
+            #
+            # s_t = self.lstm.step(notes_t, s_tm1)
+            # music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
+            #                            tf.zeros([k - t - 1, self.v_size])], 0)
+            #
+            # return t+1, k, notes_t, s_t, music
 
         count = tf.constant(0)
         music = tf.zeros([length, self.v_size])
@@ -91,19 +94,19 @@ class RNN_DBN:
 
     def train_model(self, x):
         with tf.variable_scope('train_rnn_rbm'):
-            # states = self.__unroll_rnn(x)
-            # state0 = self.rnn_s0
-            # if self.num_rnn_cells > 1:
-            #     states = states[-1]
-            #     state0 = state0[-1]
-            # u_t = tf.reshape(states.c, [-1, self.s_size])
-            # q_t = tf.reshape(states.h, [-1, self.s_size])
-            # u_tm1 = tf.concat([state0.c, u_t], 0)[:-1, :]
-            # q_tm1 = tf.concat([state0.h, q_t], 0)[:-1, :]
+            states = self.__unroll_rnn(x)
+            state0 = self.rnn_s0
+            if self.num_rnn_cells > 1:
+                states = states[-1]
+                state0 = state0[-1]
+            u_t = tf.reshape(states.c, [-1, self.s_size])
+            q_t = tf.reshape(states.h, [-1, self.s_size])
+            u_tm1 = tf.concat([state0.c, u_t], 0)[:-1, :]
+            q_tm1 = tf.concat([state0.h, q_t], 0)[:-1, :]
 
-            states = self.lstm.unroll(x)
-            u_tm1 = tf.concat([self.lstm.u0, states[0]], 0)[:-1, :]
-            q_tm1 = tf.concat([self.lstm.q0, states[1]], 0)[:-1, :]
+            # states = self.lstm.unroll(x)
+            # u_tm1 = tf.concat([self.lstm.u0, states[0]], 0)[:-1, :]
+            # q_tm1 = tf.concat([self.lstm.q0, states[1]], 0)[:-1, :]
 
             rbm_layers = [x]
             rbms = []
