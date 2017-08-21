@@ -15,7 +15,7 @@ class MusicGenerator:
         self.conf = configuration
         self.manipulator = mm.MidiManipulator(self.conf.num_timesteps)
 
-        self.rnn_rbm = RNN_DBN(self.manipulator.input_length, [150, 150], 100)
+        self.rnn_rbm = RNN_DBN(self.manipulator.input_length, [150], 100)
 
         with tf.variable_scope('inputs'):
             self.x = tf.placeholder(tf.float32, shape=[None, self.manipulator.input_length])
