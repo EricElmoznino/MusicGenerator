@@ -21,12 +21,12 @@ class RNN_DBN:
         with tf.variable_scope('rnn'):
             if num_rnn_cells > 1:
                 self.rnn = tf.contrib.rnn.MultiRNNCell(
-                    [tf.contrib.rnn.LSTMCell(self.s_size, forget_bias=0.0,
+                    [tf.contrib.rnn.LSTMCell(self.s_size,
                                              initializer=tf.truncated_normal_initializer(stddev=0.0001))
                      for _ in range(num_rnn_cells)]
                 )
             else:
-                self.rnn = tf.contrib.rnn.LSTMCell(self.s_size, forget_bias=0.0,
+                self.rnn = tf.contrib.rnn.LSTMCell(self.s_size,
                                                    initializer=tf.truncated_normal_initializer(stddev=0.0001))
             self.rnn_s0 = self.rnn.zero_state(1, tf.float32)
 
