@@ -92,8 +92,7 @@ class RNN_DBN:
                 bv = tf.matmul(u_tm1, self.Wu[i]) + tf.matmul(q_tm1, self.Wq[i]) + self.B[i]
                 bh = tf.matmul(u_tm1, self.Wu[i+1]) + tf.matmul(q_tm1, self.Wq[i+1]) + self.B[i+1]
                 rbms.append(RBM(self.W[i], bv, bh))
-                rbm_layers.append(tf.sigmoid(tf.matmul(rbm_layers[-1], self.W[i]) + bh))
-                # rbm_layers.append(tf.sigmoid(tf.matmul(rbm_layers[-1], self.W[i]) + self.B[i+1]))
+                rbm_layers.append(tf.sigmoid(tf.matmul(rbm_layers[-1], self.W[i]) + self.B[i+1]))
 
         with tf.variable_scope('train_ops'):
             costs = []
