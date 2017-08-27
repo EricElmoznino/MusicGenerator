@@ -41,37 +41,38 @@ class RNN_DBN:
 
     def generation_model(self, x, length):
         with tf.variable_scope('generation'):
-            primer_states = self.__unroll_rnn(x)
-            if self.num_rnn_cells > 1:
-                primer_state = tuple([tf.contrib.rnn.LSTMStateTuple(state.c[-1], state.h[-1]) for state in primer_states])
-            else:
-                primer_state = tf.contrib.rnn.LSTMStateTuple(primer_states.c[-1], primer_states.h[-1])
+            with tf.variable_scope('primer'):
+                primer_states = self.__unroll_rnn(x)
+                if self.num_rnn_cells > 1:
+                    primer_state = tuple([tf.contrib.rnn.LSTMStateTuple(state.c[-1], state.h[-1]) for state in primer_states])
+                else:
+                    primer_state = tf.contrib.rnn.LSTMStateTuple(primer_states.c[-1], primer_states.h[-1])
 
-        def music_timestep(t, k, x_tm1, s_tm1, music):
-            if self.num_rnn_cells > 1:
-                u_tm1 = s_tm1[-1].c
-                q_tm1 = s_tm1[-1].h
-            else:
-                u_tm1 = s_tm1.c
-                q_tm1 = s_tm1.h
+            def music_timestep(t, k, x_tm1, s_tm1, music):
+                if self.num_rnn_cells > 1:
+                    u_tm1 = s_tm1[-1].c
+                    q_tm1 = s_tm1[-1].h
+                else:
+                    u_tm1 = s_tm1.c
+                    q_tm1 = s_tm1.h
 
-            dbn_biases = []
-            for wu, wq, b in zip(self.Wu, self.Wq, self.B):
-                dbn_biases.append(tf.matmul(u_tm1, wu) + tf.matmul(q_tm1, wq) + b)
+                dbn_biases = []
+                for wu, wq, b in zip(self.Wu, self.Wq, self.B):
+                    dbn_biases.append(tf.matmul(u_tm1, wu) + tf.matmul(q_tm1, wq) + b)
 
-            dbn = DBN(self.W, dbn_biases)
-            notes_t = dbn.gen_sample(25, x=x_tm1)
+                dbn = DBN(self.W, dbn_biases)
+                notes_t = dbn.gen_sample(25, x=x_tm1)
 
-            _, s_t = self.rnn(notes_t, s_tm1)
-            music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
-                                       tf.zeros([k-t-1, self.v_size])], 0)
-            return t+1, k, notes_t, s_t, music
+                _, s_t = self.rnn(notes_t, s_tm1)
+                music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
+                                           tf.zeros([k-t-1, self.v_size])], 0)
+                return t+1, k, notes_t, s_t, music
 
-        count = tf.constant(0)
-        music = tf.zeros([length, self.v_size])
-        _, _, _, _, music = tf.while_loop(lambda t, k, *args: t < k, music_timestep,
-                                          [count, length, tf.zeros([1, self.v_size]), primer_state, music],
-                                          back_prop=False)
+            count = tf.constant(0)
+            music = tf.zeros([length, self.v_size])
+            _, _, _, _, music = tf.while_loop(lambda t, k, *args: t < k, music_timestep,
+                                              [count, length, tf.zeros([1, self.v_size]), primer_state, music],
+                                              back_prop=False)
         return music
 
     def train_model(self, x):
