@@ -1,6 +1,9 @@
 import tensorflow as tf
 import RBM
 
+
+# A DBN class that is only useful for generation, since training
+# DBN's is done by greedily training individual RBM's
 class DBN:
 
     def __init__(self, weights, biases):
