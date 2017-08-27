@@ -55,6 +55,7 @@ class MusicGenerator:
             start_time = time.time()
             step = 0
             dbn_layer = 1
+            # Greedily train each layer in the dbn
             for cost, optimizer, loglikelihood, summary in zip(costs, optimizers, loglikelihoods, summaries):
                 summary = tf.summary.merge(summary)
                 for epoch in range(1, self.conf.epochs + 1):
@@ -89,6 +90,7 @@ class MusicGenerator:
         print('Starting pre-training\n')
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
+            # Greedily train each layer in the dbn
             for optimizer in optimizers:
                 for epoch in range(self.conf.pretrain_epochs):
                     shuffle(songs)

@@ -13,6 +13,8 @@ class RNN_DBN:
         self.s_size = state_size
         self.num_rnn_cells = num_rnn_cells
 
+        # Model variables
+
         with tf.variable_scope('dbn'):
             self.W = []
             for i in range(len(self.dbn_sizes) - 1):
@@ -43,6 +45,8 @@ class RNN_DBN:
 
     def generation_model(self, x, length):
         with tf.variable_scope('generation'):
+            # Propagate the states of a primer song and remember the
+            # final state. It is used as the initial state of the generated song
             with tf.variable_scope('primer'):
                 primer_states = self.__unroll_rnn(x)
                 if self.num_rnn_cells > 1:
@@ -59,6 +63,8 @@ class RNN_DBN:
                         u_tm1 = s_tm1.c
                         q_tm1 = s_tm1.h
 
+                    # Use the previous lstm state to compute the biases
+                    # for each layer of the dbn
                     dbn_biases = []
                     for wu, wq, b in zip(self.Wu, self.Wq, self.B):
                         dbn_biases.append(tf.matmul(u_tm1, wu) + tf.matmul(q_tm1, wq) + b)
@@ -67,6 +73,8 @@ class RNN_DBN:
                     notes_t = dbn.gen_sample(25, x=x_tm1)
 
                     _, s_t = self.rnn(notes_t, s_tm1)
+
+                    # Concatenate the current music timestep to the whole song
                     music = music + tf.concat([tf.zeros([t, self.v_size]), notes_t,
                                                tf.zeros([k-t-1, self.v_size])], 0)
                 return t+1, k, notes_t, s_t, music
@@ -92,6 +100,8 @@ class RNN_DBN:
                 u_tm1 = tf.concat([state0.c, u_t], 0)[:-1, :]
                 q_tm1 = tf.concat([state0.h, q_t], 0)[:-1, :]
 
+            # Make an rbm between each layer of the dbn so that
+            # we can train each layer greedily
             with tf.variable_scope('make_rbms'):
                 rbm_layers = [x]
                 rbms = []
@@ -102,6 +112,8 @@ class RNN_DBN:
                     visible_layer = tf.sigmoid(tf.matmul(rbm_layers[-1], self.W[i]) + self.B[i+1])
                     rbm_layers.append(sample(visible_layer))
 
+        # Create a list of optimizers and other subgraphs, one for each rbm
+        # that we will train
         with tf.variable_scope('train_ops'):
             costs = []
             optimizers = []
@@ -125,6 +137,9 @@ class RNN_DBN:
 
     def pretrain_model(self, x):
         with tf.variable_scope('pre-train_dbn'):
+
+            # Make an rbm between each layer of the dbn so that
+            # we can train each layer greedily
             with tf.variable_scope('make_rbms'):
                 rbm_layers = [x]
                 rbms = []
@@ -133,6 +148,8 @@ class RNN_DBN:
                     visible_layer = tf.sigmoid(tf.matmul(rbm_layers[-1], self.W[i]) + self.B[i+1])
                     rbm_layers.append(sample(visible_layer))
 
+        # Create a list of optimizers and other subgraphs, one for each rbm
+        # that we will train
         with tf.variable_scope('pre-train_ops'):
             costs = []
             optimizers = []
@@ -143,6 +160,8 @@ class RNN_DBN:
                 optimizers.append(optimizer)
         return costs, optimizers
 
+    # Propagate the states of the lstm forward in time
+    # with a batch of training inputs
     def __unroll_rnn(self, x):
         with tf.variable_scope('unroll_rnn'):
             def recurrence(s_tm1, _x):
