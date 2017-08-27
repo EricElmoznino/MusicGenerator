@@ -1,5 +1,5 @@
 import tensorflow as tf
-from RBM import RBM
+from RBM import RBM, sample
 from DBN import DBN
 import Helpers as hp
 
@@ -93,7 +93,8 @@ class RNN_DBN:
                 bv = tf.matmul(u_tm1, self.Wu[i]) + tf.matmul(q_tm1, self.Wq[i]) + self.B[i]
                 bh = tf.matmul(u_tm1, self.Wu[i+1]) + tf.matmul(q_tm1, self.Wq[i+1]) + self.B[i+1]
                 rbms.append(RBM(self.W[i], bv, bh))
-                rbm_layers.append(tf.sigmoid(tf.matmul(rbm_layers[-1], self.W[i]) + self.B[i+1]))
+                visible_layer = tf.sigmoid(tf.matmul(rbm_layers[-1], self.W[i]) + self.B[i+1])
+                rbm_layers.append(sample(visible_layer))
 
         with tf.variable_scope('train_ops'):
             costs = []
@@ -122,7 +123,8 @@ class RNN_DBN:
             rbms = []
             for i in range(len(self.dbn_sizes) - 1):
                 rbms.append(RBM(self.W[i], self.B[i], self.B[i+1]))
-                rbm_layers.append(tf.sigmoid(tf.matmul(rbm_layers[-1], self.W[i]) + self.B[i+1]))
+                visible_layer = tf.sigmoid(tf.matmul(rbm_layers[-1], self.W[i]) + self.B[i+1])
+                rbm_layers.append(sample(visible_layer))
 
         with tf.variable_scope('pre-train_ops'):
             costs = []
