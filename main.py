@@ -4,17 +4,17 @@ import Helpers as hp
 
 # musician = MusicGenerator(hp.Configuration(epochs=200, train_log_path='./pop50h'))
 # musician.train('./training_songs/Pop')
-# music = musician.generate(3200, './training_songs/Pop/I_Kissed_A_Girl_-_Chorus.mid',
+# music = musician.generate(1000, './training_songs/Pop/I_Kissed_A_Girl_-_Chorus.mid',
 #                           './generated_music', 'pop50h')
-musician = MusicGenerator(hp.Configuration(epochs=200, train_log_path='./jazz0001'))
+musician = MusicGenerator(hp.Configuration(epochs=300, train_log_path='./jazz300epoch'))
 musician.train('./training_songs/Jazz')
-music = musician.generate(3200, './training_songs/Jazz/012-Alice_In_Wonderland.mid',
-                          './generated_music', 'jazz0001')
+music = musician.generate(1000, './training_songs/Jazz/012-Alice_In_Wonderland.mid',
+                          './generated_music', 'jazz300epoch')
 # musician = MusicGenerator(hp.Configuration(epochs=200, train_log_path='./classical'))
 # musician.train('./training_songs/Classical')
-# music = musician.generate(3200, './training_songs/Classical/045-BEETHOVEN_-_Op-031_No-03_Piano_Sonata_No-18_E-flat-Maj_The_Hunt_(pb_Koleso).mid',
+# music = musician.generate(1000, './training_songs/Classical/045-BEETHOVEN_-_Op-031_No-03_Piano_Sonata_No-18_E-flat-Maj_The_Hunt_(pb_Koleso).mid',
 #                           './generated_music', 'classical')
 # musician = MusicGenerator(hp.Configuration(epochs=200, train_log_path='./nottingham', pretrain_epochs=0))
 # musician.train('./training_songs/Nottingham')
-# music = musician.generate(3200, './training_songs/Nottingham/ashover_simple_chords_5.mid',
+# music = musician.generate(1000, './training_songs/Nottingham/ashover_simple_chords_5.mid',
 #                           './generated_music', 'nottingham')
