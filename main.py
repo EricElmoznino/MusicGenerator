@@ -6,10 +6,10 @@ import Helpers as hp
 # musician.train('./training_songs/Pop')
 # music = musician.generate(1000, './training_songs/Pop/I_Kissed_A_Girl_-_Chorus.mid',
 #                           './generated_music', 'pop50h')
-musician = MusicGenerator(hp.Configuration(epochs=100, train_log_path='./jazz75h4m'))
+musician = MusicGenerator(hp.Configuration(epochs=100, train_log_path='./jazz100h4m'))
 musician.train('./training_songs/Jazz')
 music = musician.generate(1000, './training_songs/Jazz/005-A_Nighting.mid',
-                          './generated_music', 'jazz75h4m')
+                          './generated_music', 'jazz100h4m')
 # musician = MusicGenerator(hp.Configuration(epochs=100, train_log_path='./classical100h'))
 # musician.train('./training_songs/Classical')
 # music = musician.generate(1000, './training_songs/Classical/045-BEETHOVEN_-_Op-031_No-03_Piano_Sonata_No-18_E-flat-Maj_The_Hunt_(pb_Koleso).mid',
