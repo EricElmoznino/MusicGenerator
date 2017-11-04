@@ -1,5 +1,5 @@
 # MusicGenerator
-A deep belief net coupled with a recurrent LSTM network that composes original piano pieces.
+A deep belief net coupled with a recurrent LSTM network that composes original piano pieces. Implemented in TensorFlow.
 
 File Descriptions:
 - MusicGenerator.py:
